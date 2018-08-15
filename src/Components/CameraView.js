@@ -4,15 +4,27 @@ import {
   View,
   TouchableOpacity,
   PanResponder,
-  StyleSheet
+  StyleSheet,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import { Camera, Permissions } from 'expo';
 
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+
+
+
+
 export default class CameraView extends Component {
-  state = {
-    hasCameraPermission: null,
-    type: Camera.Constants.Type.back,
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      hasCameraPermission: null,
+      type: Camera.Constants.Type.back,
+    };
+
+  }
+
 
   async componentWillMount() {
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
@@ -36,7 +48,7 @@ export default class CameraView extends Component {
       return <Text>No access to camera</Text>;
     } else {
       return (
-        <View style={cameraViewContainerStyles}>
+        <View style={[cameraViewContainerStyles, {width: this.props.width}]}>
           <Camera style={flexOne} type={this.state.type}>
             <View
               style={takePictureButtonContainer}>
@@ -75,11 +87,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: 'white',
   },
-  cameraViewContainerStyles: {
+  cameraStyle: {
     flex: 1,
-    position: 'absolute',
+  },
+  cameraViewContainerStyles: {
+    backgroundColor: 'orange',
+    flex: 1,
+    justifyContent: 'center',
     height: '100%',
-    width: '100%'
   }
 
 })
