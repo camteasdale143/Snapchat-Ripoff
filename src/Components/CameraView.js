@@ -9,6 +9,9 @@ import {
   Dimensions,
 } from 'react-native';
 import { Camera, Permissions } from 'expo';
+import CameraUIBottom from './Camera/CameraUIBottom';
+import CameraUITop from './Camera/CameraUITop';
+import PhotoPreSend from './Camera/PhotoPreSend';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
@@ -21,8 +24,14 @@ export default class CameraView extends Component {
     this.state = {
       hasCameraPermission: null,
       type: Camera.Constants.Type.back,
+      takenPhoto: null
     };
 
+    this.flipCamera = this.flipCamera.bind(this);
+    this.snapPhoto = this.snapPhoto.bind(this);
+    this.getView = this.getView.bind(this);
+    this.renderCamera = this.renderCamera.bind(this);
+    this.deletePhoto = this.deletePhoto.bind(this);
   }
 
 
@@ -39,8 +48,73 @@ export default class CameraView extends Component {
     });
   }
 
+  async snapPhoto() {
+    try {
+      console.log('got photo');
+      if (this.refs.camera) {
+        console.log('recognized camera');
+        await this.setState({
+          takenPhoto: await this.refs.camera.takePictureAsync()
+        })
+      }
+      console.log(this.state.takenPhoto)
+      this.props.disableSwiping();
+    }
+    catch(err) {
+      alert(err)
+    }
+  };
+
+  deletePhoto() {
+    this.setState({
+      takenPhoto: null,
+    })
+    this.props.enableSwiping();
+  }
+
+  sendPhoto() {
+    alert('photo sending is not yet implemented');
+  }
+
+  renderCamera() {
+    const { cameraViewContainerStyles } = styles;
+    const { flexOne, takePictureButtonContainer, takePictureButton, flipCameraTextStyle } = styles;
+    return(
+      <View style={[cameraViewContainerStyles, {width: this.props.width}]}>
+        <Camera ref='camera'
+          style={{flex: 1}} type={this.state.type}>
+          <View style={styles.uiTopContainerStyles}>
+            <CameraUITop flipCamera={ this.flipCamera }/>
+          </View>
+          <View style={styles.uiBottomContainerStyles}>
+            <CameraUIBottom
+              snapPhoto={this.snapPhoto}/>
+          </View>
+        </Camera>
+      </View>
+    )
+  }
+  getView() {
+    if (this.state.takenPhoto !== null) {
+      return(
+        <PhotoPreSend
+          uri={this.state.takenPhoto.uri}
+          onDeletePhoto={this.deletePhoto.bind(this)}
+          onSendPhoto={this.sendPhoto}
+          imageFlipped={(this.state.type === Camera.Constants.Type.front)}
+          />
+      )
+    }
+    else {
+      return (
+        this.renderCamera()
+      )
+    }
+  }
+
   render() {
-    const { flexOne, cameraViewContainerStyles, takePictureButtonContainer, takePictureButton, flipCameraTextStyle } = styles;
+    const { cameraViewContainerStyles } = styles;
+    const { flexOne, takePictureButtonContainer, takePictureButton, flipCameraTextStyle } = styles;
     const { hasCameraPermission } = this.state;
     if (hasCameraPermission === null) {
       return <View />;
@@ -48,47 +122,24 @@ export default class CameraView extends Component {
       return <Text>No access to camera</Text>;
     } else {
       return (
-        <View style={[cameraViewContainerStyles, {width: this.props.width}]}>
-          <Camera style={flexOne} type={this.state.type}>
-            <View
-              style={takePictureButtonContainer}>
-              <TouchableOpacity
-                style={takePictureButton}
-                onPress={this.flipCamera.bind(this)}>
-                <Text
-                  style={flipCameraTextStyle}>
-                  {' '}Flip{' '}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </Camera>
-        </View>
+        this.getView()
       );
     }
+
   }
 }
 
 const styles = StyleSheet.create({
-  flexOne: {
-    flex: 1
-  },
-  takePictureButtonContainer: {
+  uiTopContainerStyles: {
     flex: 1,
     backgroundColor: 'transparent',
     flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-end',
   },
-  takePictureButton: {
-    flex: 0.1,
-    alignSelf: 'flex-end',
+  uiBottomContainerStyles: {
     alignItems: 'center',
-  },
-  flipCameraTextStyle: {
-    fontSize: 18,
-    marginBottom: 10,
-    color: 'white',
-  },
-  cameraStyle: {
-    flex: 1,
+    justifyContent: 'center',
   },
   cameraViewContainerStyles: {
     backgroundColor: 'orange',

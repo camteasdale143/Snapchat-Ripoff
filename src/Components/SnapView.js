@@ -5,11 +5,13 @@ import {
   StyleSheet
 } from 'react-native';
 
+import SnapList from './SnapMessageIndex/SnapList';
+
 export default class SnapView extends Component {
   render() {
     return(
       <View style={styles.snapContainer}>
-        <Text>Snap List</Text>
+        <SnapList />
       </View>
     )
   }
